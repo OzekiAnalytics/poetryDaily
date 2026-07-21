@@ -23,4 +23,4 @@ jobs:
           python -m pip install --upgrade pip
 
       - name: Run daily script
-        run: python send_daily.py
+        run: python build.py
