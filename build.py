@@ -126,8 +126,8 @@ def main():
 
     DOCS.mkdir(exist_ok=True)
 
-    start = date(2000, 1, 1)
-    end = date(2050, 12, 31)
+    start = date(2020, 1, 1)
+    end = date(2030, 12, 31)
 
     d = start
 
