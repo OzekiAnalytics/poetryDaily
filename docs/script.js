@@ -34,7 +34,41 @@ function todayString() {
 
 function formatDate(d) {
 
-    return d.toISOString().slice(0, 10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    return `${y}-${m}-${day}`;
+
+}
+
+
+// new Date("2026-07-28") parses the string as UTC midnight, which is
+// still the *previous* day in any timezone behind UTC (e.g. US timezones).
+// Parsing the parts manually keeps everything in local time instead.
+function parseLocalDate(dateString) {
+
+    const [y, m, d] = dateString.split("-").map(Number);
+
+    return new Date(y, m - 1, d);
+
+}
+
+
+function renderDeviceDate(today) {
+
+    const el = document.getElementById("device-date");
+
+    if (!el) return;
+
+    const formatted = parseLocalDate(today).toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
+
+    el.textContent = `Your device's date: ${formatted}`;
 
 }
 
@@ -58,13 +92,21 @@ function setDate(dateString, replace = false) {
 
 function initialize() {
 
-    if (window.location.hash.length > 1) {
+    const today = todayString();
+    const lastKnownToday = localStorage.getItem("pd-last-known-today");
 
+    if (window.location.hash.length > 1 && lastKnownToday === today) {
+
+        // Same calendar day as this browser's last visit — trust the
+        // hash, since it might be mid-navigation to another day.
         currentDate = window.location.hash.substring(1);
 
     } else {
 
-        currentDate = todayString();
+        // Either there's no hash yet, or the day has rolled over since
+        // this browser last opened the app. In both cases default to
+        // today, so the site never gets stuck showing a stale date.
+        currentDate = today;
 
         history.replaceState(
             null,
@@ -73,6 +115,10 @@ function initialize() {
         );
 
     }
+
+    localStorage.setItem("pd-last-known-today", today);
+
+    renderDeviceDate(today);
 
     render();
 
@@ -91,6 +137,7 @@ function render() {
         document.getElementById("author").textContent = "";
         document.getElementById("date").textContent = currentDate;
         document.getElementById("poem").textContent = "";
+        renderAnalysisUnavailable();
 
         return;
     }
@@ -104,6 +151,135 @@ function render() {
     document.getElementById("date").textContent = currentDate;
     document.getElementById("poem").textContent = poem.text;
 
+    loadAnalysis(poem.slug);
+
+}
+
+
+/* ---------- analysis panel ---------- */
+
+// Bump this if a render happens before a slower fetch resolves,
+// so we never paint a stale poem's analysis over the current one.
+let analysisRequestId = 0;
+
+function renderAnalysisUnavailable() {
+
+    document.getElementById("analysis-status").textContent =
+        "No breakdown available.";
+    document.getElementById("analysis-status").style.display = "block";
+    document.getElementById("analysis-lines").innerHTML = "";
+
+}
+
+
+async function loadAnalysis(slug) {
+
+    const requestId = ++analysisRequestId;
+
+    const statusEl = document.getElementById("analysis-status");
+    const linesEl = document.getElementById("analysis-lines");
+
+    statusEl.textContent = "Loading…";
+    statusEl.style.display = "block";
+    linesEl.innerHTML = "";
+
+    let lines;
+
+    try {
+
+        const response = await fetch(`analysis/${slug}.json`);
+
+        if (!response.ok) {
+            throw new Error("not found");
+        }
+
+        lines = await response.json();
+
+    } catch (err) {
+
+        if (requestId === analysisRequestId) {
+            renderAnalysisUnavailable();
+        }
+
+        return;
+    }
+
+    if (requestId !== analysisRequestId) {
+        // A newer poem has since been loaded; discard this result.
+        return;
+    }
+
+    statusEl.style.display = "none";
+    linesEl.innerHTML = "";
+
+    for (const line of lines) {
+
+        const li = document.createElement("li");
+
+        if (line.text.trim() === "") {
+            li.className = "blank-line";
+            li.textContent = "—";
+            linesEl.appendChild(li);
+            continue;
+        }
+
+        const wordsSpan = document.createElement("span");
+        wordsSpan.className = "analysis-words";
+
+        for (const word of line.words) {
+            wordsSpan.appendChild(renderWord(word));
+        }
+
+        const countSpan = document.createElement("span");
+        countSpan.className = "syllable-count";
+        countSpan.textContent =
+            `${line.syllable_count} syll${line.syllable_count === 1 ? "" : "s"}`;
+
+        li.appendChild(wordsSpan);
+        li.appendChild(countSpan);
+        linesEl.appendChild(li);
+
+    }
+
+}
+
+
+function renderWord(word) {
+
+    const span = document.createElement("span");
+    span.className = "analysis-word";
+    span.title = word.word;
+
+    if (word.stress === null) {
+
+        span.append(dot("s-unk", "?"));
+
+    } else {
+
+        for (const s of word.stress) {
+
+            if (s === 1) span.append(dot("s1", "●"));
+            else if (s === 2) span.append(dot("s2", "◐"));
+            else span.append(dot("s0", "·"));
+
+        }
+
+    }
+
+    span.append(" " + word.word);
+
+    return span;
+
+}
+
+
+function dot(cls, char) {
+
+    const d = document.createElement("span");
+    d.className = "stress-dot " + cls;
+    d.textContent = char;
+    return d;
+
 }
 
 
@@ -111,7 +287,7 @@ function render() {
 
 document.getElementById("prev").onclick = () => {
 
-    const d = new Date(currentDate);
+    const d = parseLocalDate(currentDate);
 
     d.setDate(d.getDate() - 1);
 
@@ -122,7 +298,7 @@ document.getElementById("prev").onclick = () => {
 
 document.getElementById("next").onclick = () => {
 
-    const d = new Date(currentDate);
+    const d = parseLocalDate(currentDate);
 
     d.setDate(d.getDate() + 1);
 
