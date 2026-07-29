@@ -1,5 +1,6 @@
 let poems = [];
 let schedule = {};
+let analysisData = {};
 
 let currentDate = null;
 
@@ -13,6 +14,9 @@ async function loadData() {
 
     const scheduleResponse = await fetch("schedule.json");
     schedule = await scheduleResponse.json();
+
+    const analysisResponse = await fetch("analysis.json");
+    analysisData = await analysisResponse.json();
 
     initialize();
 }
@@ -158,10 +162,6 @@ function render() {
 
 /* ---------- analysis panel ---------- */
 
-// Bump this if a render happens before a slower fetch resolves,
-// so we never paint a stale poem's analysis over the current one.
-let analysisRequestId = 0;
-
 function renderAnalysisUnavailable() {
 
     document.getElementById("analysis-status").textContent =
@@ -172,40 +172,15 @@ function renderAnalysisUnavailable() {
 }
 
 
-async function loadAnalysis(slug) {
-
-    const requestId = ++analysisRequestId;
+function loadAnalysis(slug) {
 
     const statusEl = document.getElementById("analysis-status");
     const linesEl = document.getElementById("analysis-lines");
 
-    statusEl.textContent = "Loading…";
-    statusEl.style.display = "block";
-    linesEl.innerHTML = "";
+    const lines = analysisData[slug];
 
-    let lines;
-
-    try {
-
-        const response = await fetch(`analysis/${slug}.json`);
-
-        if (!response.ok) {
-            throw new Error("not found");
-        }
-
-        lines = await response.json();
-
-    } catch (err) {
-
-        if (requestId === analysisRequestId) {
-            renderAnalysisUnavailable();
-        }
-
-        return;
-    }
-
-    if (requestId !== analysisRequestId) {
-        // A newer poem has since been loaded; discard this result.
+    if (!lines) {
+        renderAnalysisUnavailable();
         return;
     }
 
