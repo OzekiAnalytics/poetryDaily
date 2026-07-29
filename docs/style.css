@@ -10,10 +10,125 @@ body {
     font-family: Georgia, "Times New Roman", serif;
 }
 
-main {
-    max-width: 760px;
+#layout {
+    max-width: 1100px;
     margin: 60px auto;
     padding: 0 25px;
+    display: flex;
+    gap: 50px;
+    align-items: flex-start;
+}
+
+main {
+    max-width: 620px;
+    flex: 1 1 500px;
+    margin: 0;
+    padding: 0;
+}
+
+aside#analysis {
+    flex: 1 1 300px;
+    max-width: 340px;
+    background: white;
+    border: 1px solid #e3e1dc;
+    border-radius: 6px;
+    padding: 1.2rem 1.4rem;
+    font-family: Georgia, "Times New Roman", serif;
+    position: sticky;
+    top: 40px;
+}
+
+aside#analysis h3 {
+    margin-top: 0;
+    font-size: 1rem;
+    font-weight: normal;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.analysis-note {
+    color: #888;
+    font-style: italic;
+    font-size: .95rem;
+}
+
+#analysis-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: .95rem;
+}
+
+#analysis-lines li {
+    padding: .6rem 0;
+    border-bottom: 1px solid #f0efeb;
+}
+
+.analysis-line-header {
+    font-size: .78rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: .3rem;
+}
+
+.analysis-line-body {
+    line-height: 1.7;
+}
+
+.analysis-word {
+    display: inline-block;
+    margin-right: .45rem;
+    white-space: nowrap;
+}
+
+.syl-unknown {
+    font-style: italic;
+    color: #999;
+    border-bottom: 1px dotted #ccc;
+}
+
+.syl-primary {
+    font-weight: 700;
+    color: #b5442e;
+}
+
+.syl-secondary {
+    font-weight: 600;
+    color: #c98a5e;
+}
+
+.syl-unstressed {
+    font-weight: 400;
+    color: #999;
+}
+
+.syl-approx {
+    border-bottom: 1px dotted #ccc;
+}
+
+.analysis-key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    font-size: .85rem;
+    color: #888;
+    margin-top: 1rem;
+}
+
+@media (max-width: 880px) {
+
+    #layout {
+        flex-direction: column;
+    }
+
+    aside#analysis {
+        max-width: none;
+        width: 100%;
+        position: static;
+    }
+
 }
 
 h1 {
@@ -64,6 +179,13 @@ hr {
     margin: 2rem 0;
 }
 
+.device-date {
+    text-align: center;
+    color: #999;
+    font-size: .8rem;
+    margin-top: -1.5rem;
+}
+
 footer {
     margin-top: 4rem;
     text-align: center;
@@ -73,11 +195,4 @@ footer {
 
 footer a {
     color: inherit;
-}
-
-.device-date {
-    text-align: center;
-    color: #999;
-    font-size: .8rem;
-    margin-top: -1.5rem;
 }
