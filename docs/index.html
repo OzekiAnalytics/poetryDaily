@@ -17,6 +17,8 @@
 
 <body>
 
+<div id="layout">
+
 <main>
 
     <h1 id="title">Loading…</h1>
@@ -45,6 +47,8 @@
 
     </nav>
 
+    <p id="device-date" class="device-date"></p>
+
     <footer>
 
         Public domain texts from
@@ -55,6 +59,25 @@
     </footer>
 
 </main>
+
+<aside id="analysis">
+
+    <h3>Line breakdown</h3>
+
+    <p id="analysis-status" class="analysis-note">Loading…</p>
+
+    <ol id="analysis-lines"></ol>
+
+    <p class="analysis-key">
+        <span class="stress-dot s1">●</span> primary stress
+        <span class="stress-dot s2">◐</span> secondary
+        <span class="stress-dot s0">·</span> unstressed
+        <span class="stress-dot s-unk">?</span> not in dictionary
+    </p>
+
+</aside>
+
+</div>
 
 <script src="script.js"></script>
 
