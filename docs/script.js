@@ -187,73 +187,75 @@ function loadAnalysis(slug) {
     statusEl.style.display = "none";
     linesEl.innerHTML = "";
 
-    for (const line of lines) {
+    lines.forEach((line, i) => {
 
         const li = document.createElement("li");
 
+        const header = document.createElement("div");
+        header.className = "analysis-line-header";
+        header.textContent = line.text.trim() === ""
+            ? `Line ${i + 1}`
+            : `Line ${i + 1} — ${line.syllable_count} syllable${line.syllable_count === 1 ? "" : "s"}`;
+
+        li.appendChild(header);
+
+        const body = document.createElement("div");
+        body.className = "analysis-line-body";
+
         if (line.text.trim() === "") {
-            li.className = "blank-line";
-            li.textContent = "—";
-            linesEl.appendChild(li);
-            continue;
+
+            body.textContent = "—";
+
+        } else {
+
+            line.words.forEach((word, wi) => {
+                body.appendChild(renderWord(word));
+                if (wi < line.words.length - 1) {
+                    body.append(" ");
+                }
+            });
+
         }
 
-        const wordsSpan = document.createElement("span");
-        wordsSpan.className = "analysis-words";
-
-        for (const word of line.words) {
-            wordsSpan.appendChild(renderWord(word));
-        }
-
-        const countSpan = document.createElement("span");
-        countSpan.className = "syllable-count";
-        countSpan.textContent =
-            `${line.syllable_count} syll${line.syllable_count === 1 ? "" : "s"}`;
-
-        li.appendChild(wordsSpan);
-        li.appendChild(countSpan);
+        li.appendChild(body);
         linesEl.appendChild(li);
 
-    }
+    });
 
 }
 
 
 function renderWord(word) {
 
-    const span = document.createElement("span");
-    span.className = "analysis-word";
-    span.title = word.word;
+    const wrapper = document.createElement("span");
+    wrapper.className = "analysis-word";
 
     if (word.stress === null) {
 
-        span.append(dot("s-unk", "?"));
+        wrapper.classList.add("syl-unknown");
+        wrapper.title = "not in dictionary";
+        wrapper.textContent = word.word;
 
-    } else {
-
-        for (const s of word.stress) {
-
-            if (s === 1) span.append(dot("s1", "●"));
-            else if (s === 2) span.append(dot("s2", "◐"));
-            else span.append(dot("s0", "·"));
-
-        }
+        return wrapper;
 
     }
 
-    span.append(" " + word.word);
+    for (const chunk of word.chunks) {
 
-    return span;
+        const span = document.createElement("span");
+        span.className = "syl syl-" + (chunk.stress === 1 ? "primary" : chunk.stress === 2 ? "secondary" : "unstressed");
 
-}
+        if (chunk.approx) {
+            span.classList.add("syl-approx");
+            span.title = "approximate — syllable boundary uncertain";
+        }
 
+        span.textContent = chunk.text;
+        wrapper.appendChild(span);
 
-function dot(cls, char) {
+    }
 
-    const d = document.createElement("span");
-    d.className = "stress-dot " + cls;
-    d.textContent = char;
-    return d;
+    return wrapper;
 
 }
 
